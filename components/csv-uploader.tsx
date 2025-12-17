@@ -131,8 +131,10 @@ function findHeaderIndex(lines: string[], delimiter: string): number {
 export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   const processFile = (file: File) => {
+    setSelectedFileName(file.name);
     setIsLoading(true);
 
     // Read the file as plain text (FileReader) so we can do delimiter/header heuristics first.
@@ -258,6 +260,11 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
             <p className="font-medium text-slate-600">
               Scanning file...
             </p>
+            {selectedFileName && (
+              <p className="text-xs text-slate-500 max-w-[28rem] truncate mx-auto">
+                {selectedFileName}
+              </p>
+            )}
           </div>
         ) : (
           <div className="text-center space-y-3">
@@ -272,6 +279,15 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
                 Supports comma/semicolon delimiters and preambles before the header row
               </p>
             </div>
+
+            {selectedFileName && (
+              <div className="pt-2">
+                <p className="text-xs text-slate-500">Selected file</p>
+                <p className="text-sm font-medium text-slate-800 max-w-[28rem] truncate mx-auto">
+                  {selectedFileName}
+                </p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
