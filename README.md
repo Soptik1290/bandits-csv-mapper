@@ -5,13 +5,14 @@ An AI-first data normalization tool built with Next.js, Shadcn UI, and OpenAI. T
 ## 🚀 Features
 
 - **Smart CSV Parsing:** Upload any CSV file (client-side parsing via PapaParse).
-- **AI-First Mapping:** Uses OpenAI (GPT-4o-mini) to semantically analyze column headers and map them to a strict canonical schema.
+- **AI-First Mapping:** Uses OpenAI (GPT-5-mini) to semantically analyze column headers and map them to a strict canonical schema.
 - **Local Transformation:** Applies the mapping logic locally in the browser to handle large datasets efficiently without excessive token usage.
+- **Type Safety:** Automatically parses and cleans numeric fields (Cost, Price, Year) from raw string data.
 - **Bonus: AI Enrichment:** Generates engaging e-commerce descriptions for the top 10 products using context-aware LLM prompts.
 
 ## 🛠️ Tech Stack
 
-- **Framework:** 16.0.10 (App Router)
+- **Framework:** Next.js 16.0.10 (App Router)
 - **UI/Styling:** Tailwind CSS, Shadcn UI
 - **AI Integration:** OpenAI API - GPT 5 Mini
 - **Data Handling:** PapaParse
@@ -46,11 +47,11 @@ An AI-first data normalization tool built with Next.js, Shadcn UI, and OpenAI. T
 
 ## 🧠 How AI Mapping Works
 
-To ensure efficiency and low token usage ("AI-first, but optimized"):
+To ensure efficiency and strictly follow the "AI-first, but optimized" requirement:
 
 1.  **Sampling:** The app extracts only the **headers** and the **first 5 rows** of the CSV.
 2.  **Reasoning:** This lightweight payload is sent to the LLM. The prompt instructs the AI to act as a "Data Mapping Expert" and return a JSON object mapping CSV columns to the Canonical Model fields (e.g., `set_id` → `id`, `US_retailPrice` → `price`).
-3.  **Execution:** The returned mapping logic is applied to the full dataset directly in the user's browser. This allows processing files with millions of rows without sending all data to the API.
+3.  **Execution (Token Efficient):** The returned mapping logic is applied to the full dataset **locally in the browser**. This adheres to the requirement to minimize token usage, as we never send the full dataset (which could be millions of rows) to the API.
 
 ## ✨ Bonus: Data Enrichment
 
@@ -64,6 +65,6 @@ I implemented the enrichment feature for the first 10 items:
 
 If this were a production app, I would add:
 
-- **Batch Processing:** For enrichment of thousands of rows, I would implement a queue system (e.g., BullMQ) to process data in chunks.
+- **Dynamic Header Detection:** The assignment mentions headers might not necessarily be at the top. In a production environment, I would implement a heuristic scanner to semantically detect the header row before parsing. Currently, the app assumes standard CSV formatting.
+- **Batch Processing:** For enrichment of thousands of rows, I would implement a queue system (e.g., BullMQ).
 - **User Feedback Loop:** Allow users to manually correct the AI's suggested mapping before applying it.
-- **Validation:** stricter Zod schemas for output validation.

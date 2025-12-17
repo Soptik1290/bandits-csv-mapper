@@ -10,15 +10,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Wand2, CheckCircle2, ArrowRight, FileOutput, Sparkles } from "lucide-react";
 
 export default function Home() {
+  // Data States
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvPreview, setCsvPreview] = useState<RawCsvRow[]>([]);
   const [fullCsvData, setFullCsvData] = useState<RawCsvRow[]>([]);
   
+  // AI Mapping States
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mappingResult, setMappingResult] = useState<Record<string, string | null> | null>(null);
 
+  // Final Data States
   const [finalData, setFinalData] = useState<CanonicalProduct[]>([]);
   
+  // Enrichment State
   const [isEnriching, setIsEnriching] = useState(false);
 
   const handleUploadSuccess = (headers: string[], preview: RawCsvRow[], fullData: RawCsvRow[]) => {
@@ -37,27 +41,47 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ headers: csvHeaders, preview: csvPreview }),
       });
+
       if (!response.ok) throw new Error("API Error");
       const data = await response.json();
       setMappingResult(data);
     } catch (error) {
-      console.error(error);
-      alert("Analysis failed.");
+      console.error("Analysis failed", error);
+      alert("Chyba při analýze dat.");
     } finally {
       setIsAnalyzing(false);
     }
   };
 
+  // Pomocná funkce pro čištění čísel (odstraní měnu, texty atd.)
+  const parseNumber = (value: any): number | null => {
+    if (!value) return null;
+    // Ponechá jen číslice, tečku a mínus. Např. "1 200 Kč" -> 1200
+    const cleaned = String(value).replace(/[^0-9.-]/g, "");
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  };
+
   const handleTransform = () => {
     if (!mappingResult || !fullCsvData.length) return;
+
     const transformed = fullCsvData.map((row, index) => {
-      const newRow: any = { id: String(index) };
-      Object.entries(mappingResult).forEach(([can, csv]) => {
-        if (csv && row[csv] !== undefined) newRow[can] = row[csv];
-        else newRow[can] = null;
+      const newRow: any = { id: String(index) }; // Fallback ID
+      
+      Object.entries(mappingResult).forEach(([canonicalField, csvColumn]) => {
+        const rawValue = (csvColumn && row[csvColumn] !== undefined) ? row[csvColumn] : null;
+
+        // Pokud jde o číselné pole v kanonickém modelu, musíme parsovat
+        if (["cost", "price", "year"].includes(canonicalField)) {
+          newRow[canonicalField] = parseNumber(rawValue);
+        } else {
+          // Ostatní necháme jako string (nebo null)
+          newRow[canonicalField] = rawValue !== null ? String(rawValue) : null;
+        }
       });
       return newRow as CanonicalProduct;
     });
+
     setFinalData(transformed);
   };
 
@@ -122,6 +146,9 @@ export default function Home() {
               {!mappingResult ? (
                 <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-100 flex flex-col items-center text-center gap-4">
                   <h3 className="font-semibold text-yellow-900">Step 1: AI Structure Analysis</h3>
+                  <p className="text-sm text-yellow-700 max-w-lg">
+                    AI will analyze columns (e.g. <em>{csvHeaders.slice(0,3).join(", ")}...</em>) and suggest mapping to our Canonical Model.
+                  </p>
                   <Button onClick={handleAnalyze} disabled={isAnalyzing}>
                     {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                     Analyze Columns
@@ -141,6 +168,9 @@ export default function Home() {
                     
                     <div className="flex flex-col justify-center items-center gap-4 p-4 border rounded bg-blue-50">
                       <h3 className="font-semibold text-blue-900">Step 2: Transformation</h3>
+                      <p className="text-xs text-blue-700 text-center">
+                        Apply mapping logic to all {fullCsvData.length} rows locally.
+                      </p>
                       <Button onClick={handleTransform} className="w-full" disabled={finalData.length > 0}>
                         <FileOutput className="mr-2 h-4 w-4" />
                         Transform Data
@@ -177,6 +207,7 @@ export default function Home() {
                           <TableHead className="w-[100px]">ID</TableHead>
                           <TableHead>Name</TableHead>
                           <TableHead>Category</TableHead>
+                          <TableHead>Price</TableHead>
                           <TableHead>Year</TableHead>
                           <TableHead className="w-[400px]">AI Description</TableHead>
                         </TableRow>
@@ -187,7 +218,8 @@ export default function Home() {
                             <TableCell className="font-medium text-xs">{product.id || "-"}</TableCell>
                             <TableCell>{product.name || "-"}</TableCell>
                             <TableCell>{product.category || "-"}</TableCell>
-                            <TableCell>{product.year || "-"}</TableCell>
+                            <TableCell>{product.price !== null ? product.price : "-"}</TableCell>
+                            <TableCell>{product.year !== null ? product.year : "-"}</TableCell>
                             <TableCell className="text-xs text-slate-600 italic">
                               {product.enriched_description ? (
                                 <span className="text-purple-700 font-medium">
@@ -202,6 +234,7 @@ export default function Home() {
                       </TableBody>
                     </Table>
                   </div>
+                  <p className="text-xs text-slate-400 text-center">Displaying first 10 products of {finalData.length}.</p>
                 </div>
               )}
 
