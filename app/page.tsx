@@ -47,16 +47,16 @@ export default function Home() {
       setMappingResult(data);
     } catch (error) {
       console.error("Analysis failed", error);
-      alert("Chyba při analýze dat.");
+      alert("Failed to analyze columns.");
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  // Pomocná funkce pro čištění čísel (odstraní měnu, texty atd.)
+  // Parse numeric values (strips currency symbols, spaces, etc.).
   const parseNumber = (value: any): number | null => {
     if (!value) return null;
-    // Ponechá jen číslice, tečku a mínus. Např. "1 200 Kč" -> 1200
+    // Keep digits, dot and minus. Example: "$1,200.50" -> 1200.5
     const cleaned = String(value).replace(/[^0-9.-]/g, "");
     const num = parseFloat(cleaned);
     return isNaN(num) ? null : num;
@@ -71,11 +71,11 @@ export default function Home() {
       Object.entries(mappingResult).forEach(([canonicalField, csvColumn]) => {
         const rawValue = (csvColumn && row[csvColumn] !== undefined) ? row[csvColumn] : null;
 
-        // Pokud jde o číselné pole v kanonickém modelu, musíme parsovat
+        // Numeric canonical fields must be parsed.
         if (["cost", "price", "year"].includes(canonicalField)) {
           newRow[canonicalField] = parseNumber(rawValue);
         } else {
-          // Ostatní necháme jako string (nebo null)
+          // Everything else becomes string (or null).
           newRow[canonicalField] = rawValue !== null ? String(rawValue) : null;
         }
       });

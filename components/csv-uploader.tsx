@@ -135,7 +135,7 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
   const processFile = (file: File) => {
     setIsLoading(true);
 
-    // 1. Přečteme soubor jako text manuálně (FileReader)
+    // Read the file as plain text (FileReader) so we can do delimiter/header heuristics first.
     const reader = new FileReader();
     
     reader.onload = (event) => {
@@ -145,10 +145,10 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
         return;
       }
 
-      // Rozdělíme na řádky (řeší \n i \r\n)
+      // Split into lines (handles \n and \r\n).
       const lines = text.split(/\r\n|\n|\r/);
       
-      // 2. DETEKCE ODDĚLOVAČE (Delimiter)
+      // Detect delimiter (comma vs semicolon) from a small sample.
       const sampleLines = lines.slice(0, 20);
       let commaCount = 0;
       let semicolonCount = 0;
@@ -161,17 +161,16 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
       const delimiter = semicolonCount > commaCount ? ";" : ",";
       console.log(`Smart Parser: Detected delimiter -> "${delimiter}"`);
 
-      // 3. DETEKCE HLAVIČKY (Header Row)
+      // Detect header row (supports preambles/junk lines like ";;;;;;").
       const headerIndex = findHeaderIndex(lines, delimiter);
 
       console.log(`Smart Parser: Data starts at row index ${headerIndex}`);
 
-      // 4. OČIŠTĚNÍ DAT
       // Remove "junk" rows like ";;;;;;;" that would otherwise become empty records.
       const cleanLines = lines.slice(headerIndex).filter((line) => !isDelimiterOnlyLine(line, delimiter));
       const cleanCsvString = cleanLines.join("\n");
 
-      // 5. PARSOVÁNÍ ČISTÉHO STRINGU
+      // Parse the cleaned CSV string.
       Papa.parse(cleanCsvString, {
         header: true,
         skipEmptyLines: true,
@@ -182,11 +181,11 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
 
           if (headers.length === 0 || data.length === 0) {
             setIsLoading(false);
-            alert("Nepodařilo se najít žádná data. Zkontroluj formát CSV.");
+            alert("No data found. Please check the CSV format.");
             return;
           }
 
-          // 6. DETEKCE + OTOČENÍ (TRANSPOSE) PRO "PIVOTED" CSV
+          // Detect + transpose "pivoted" CSVs where rows are attributes and columns are entities.
           // Example input:
           // ProductKey;1;2;3...
           // Product Name;...;...;...
@@ -198,7 +197,7 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
             console.log(`Smart Parser: Detected transposed CSV -> converted to ${data.length} rows and ${headers.length} columns`);
           }
 
-          // 7. NORMALIZACE: prázdné stringy -> null, odstranění úplně prázdných řádků
+          // Normalize: empty strings -> null, remove fully empty rows.
           data = data
             .map((row) => {
               const out: RawCsvRow = {};
@@ -214,17 +213,16 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
           onUploadSuccess(headers, preview, data);
           setIsLoading(false);
         },
-        // ZDE BYLA CHYBA - přidáno ": any"
         error: (err: any) => {
           console.error("PapaParse error:", err);
           setIsLoading(false);
-          alert("Chyba při zpracování CSV.");
+          alert("Failed to parse the CSV file.");
         }
       });
     };
 
     reader.onerror = () => {
-      alert("Chyba při čtení souboru.");
+      alert("Failed to read the file.");
       setIsLoading(false);
     };
 
@@ -258,7 +256,7 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
           <div className="text-center space-y-3">
             <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto" />
             <p className="font-medium text-slate-600">
-              Inteligentní skenování souboru...
+              Scanning file...
             </p>
           </div>
         ) : (
@@ -268,10 +266,10 @@ export function CsvUploader({ onUploadSuccess }: CsvUploaderProps) {
             </div>
             <div>
               <p className="text-lg font-semibold text-slate-900">
-                Nahraj CSV soubor
+                Upload a CSV file
               </p>
               <p className="text-sm text-slate-500">
-                Podporuje středníky i metadata na začátku
+                Supports comma/semicolon delimiters and preambles before the header row
               </p>
             </div>
           </div>

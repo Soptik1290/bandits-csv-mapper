@@ -1,10 +1,13 @@
-# BANDITS AI Mapper 🤠
+# BANDITS AI Mapper
 
 An AI-first data normalization tool built with Next.js, Shadcn UI, and OpenAI. This application ingests CSV files of arbitrary structure, uses an LLM to map them to a canonical product model, and enriches the data with AI-generated descriptions.
 
 ## 🚀 Features
 
-- **Smart CSV Parsing:** Upload any CSV file (client-side parsing via PapaParse).
+- **Smart CSV Parsing:** Client-side parsing via PapaParse with lightweight heuristics:
+  - delimiter detection (comma/semicolon)
+  - header row detection (handles preambles/junk lines before the header)
+  - automatic transpose for pivoted CSVs (attributes as rows, entities as columns)
 - **AI-First Mapping:** Uses OpenAI (GPT-5-mini) to semantically analyze column headers and map them to a strict canonical schema.
 - **Local Transformation:** Applies the mapping logic locally in the browser to handle large datasets efficiently without excessive token usage.
 - **Type Safety:** Automatically parses and cleans numeric fields (Cost, Price, Year) from raw string data.
@@ -65,6 +68,6 @@ I implemented the enrichment feature for the first 10 items:
 
 If this were a production app, I would add:
 
-- **Dynamic Header Detection:** The assignment mentions headers might not necessarily be at the top. In a production environment, I would implement a heuristic scanner to semantically detect the header row before parsing. Currently, the app assumes standard CSV formatting.
+- **More robust CSV ingestion:** Support tabs/pipes, quoted multiline fields, and stricter detection for edge-case files.
 - **Batch Processing:** For enrichment of thousands of rows, I would implement a queue system (e.g., BullMQ).
 - **User Feedback Loop:** Allow users to manually correct the AI's suggested mapping before applying it.
