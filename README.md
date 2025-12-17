@@ -11,9 +11,9 @@ An AI-first data normalization tool built with Next.js, Shadcn UI, and OpenAI. T
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 14 (App Router)
+- **Framework:** 16.0.10 (App Router)
 - **UI/Styling:** Tailwind CSS, Shadcn UI
-- **AI Integration:** OpenAI API
+- **AI Integration:** OpenAI API - GPT 5 Mini
 - **Data Handling:** PapaParse
 
 ## 📦 How to Run
