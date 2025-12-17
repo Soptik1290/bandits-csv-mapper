@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BANDITS AI Mapper 🤠
 
-## Getting Started
+An AI-first data normalization tool built with Next.js, Shadcn UI, and OpenAI. This application ingests CSV files of arbitrary structure, uses an LLM to map them to a canonical product model, and enriches the data with AI-generated descriptions.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Smart CSV Parsing:** Upload any CSV file (client-side parsing via PapaParse).
+- **AI-First Mapping:** Uses OpenAI (GPT-4o-mini) to semantically analyze column headers and map them to a strict canonical schema.
+- **Local Transformation:** Applies the mapping logic locally in the browser to handle large datasets efficiently without excessive token usage.
+- **Bonus: AI Enrichment:** Generates engaging e-commerce descriptions for the top 10 products using context-aware LLM prompts.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework:** Next.js 14 (App Router)
+- **UI/Styling:** Tailwind CSS, Shadcn UI
+- **AI Integration:** OpenAI API
+- **Data Handling:** PapaParse
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 How to Run
 
-## Learn More
+1.  **Clone the repository:**
 
-To learn more about Next.js, take a look at the following resources:
+    ```bash
+    git clone [https://github.com/Soptik1290/bandits-csv-mapper.git](https://github.com/Soptik1290/bandits-csv-mapper.git)
+    cd bandits-csv-mapper
+    ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2.  **Install dependencies:**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    ```bash
+    npm install
+    ```
 
-## Deploy on Vercel
+3.  **Set up Environment Variables:**
+    Create a `.env.local` file in the root directory and add your OpenAI API key:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+    ```env
+    OPENAI_API_KEY=sk-proj-....
+    ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🧠 How AI Mapping Works
+
+To ensure efficiency and low token usage ("AI-first, but optimized"):
+
+1.  **Sampling:** The app extracts only the **headers** and the **first 5 rows** of the CSV.
+2.  **Reasoning:** This lightweight payload is sent to the LLM. The prompt instructs the AI to act as a "Data Mapping Expert" and return a JSON object mapping CSV columns to the Canonical Model fields (e.g., `set_id` → `id`, `US_retailPrice` → `price`).
+3.  **Execution:** The returned mapping logic is applied to the full dataset directly in the user's browser. This allows processing files with millions of rows without sending all data to the API.
+
+## ✨ Bonus: Data Enrichment
+
+I implemented the enrichment feature for the first 10 items:
+
+- Users can click "Enrich First 10".
+- The app sends the normalized data to the LLM.
+- The LLM generates a 1-3 sentence factual description based strictly on available attributes (avoiding hallucinations).
+
+## 🔮 Future Improvements (Production)
+
+If this were a production app, I would add:
+
+- **Batch Processing:** For enrichment of thousands of rows, I would implement a queue system (e.g., BullMQ) to process data in chunks.
+- **User Feedback Loop:** Allow users to manually correct the AI's suggested mapping before applying it.
+- **Validation:** stricter Zod schemas for output validation.
